@@ -3,287 +3,166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>แผนกทันตกรรม — รายชื่อผู้ป่วยนัด</title>
+<title>แผนกทันตกรรม — ยอดผู้ป่วยนัดวันนี้</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --blue-50: #E6F1FB; --blue-200: #85B7EB; --blue-600: #185FA5; --blue-800: #0C447C;
-    --teal-50: #E1F5EE; --teal-600: #0F6E56; --teal-800: #085041;
-    --gray-50: #F1EFE8; --gray-100: #D3D1C7; --gray-400: #888780; --gray-800: #444441;
-    --amber-50: #FAEEDA; --amber-600: #854F0B;
-    --green-50: #EAF3DE; --green-600: #3B6D11;
-    --coral-50: #FAECE7; --coral-600: #993C1D;
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
-    background: #F4F6FA;
-    color: #1a1a2e;
+    font-family: 'Sarabun', sans-serif;
+    background: #EFF4FB;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Header */
   header {
-    background: var(--blue-800);
+    background: #0C447C;
     color: #fff;
     padding: 1.25rem 2rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 3px solid var(--blue-200);
+    border-bottom: 3px solid #85B7EB;
   }
-  header .brand { display: flex; align-items: center; gap: 12px; }
-  header .brand svg { width: 36px; height: 36px; }
-  header h1 { font-size: 1.35rem; font-weight: 600; letter-spacing: 0.01em; }
-  header .subtitle { font-size: 0.82rem; opacity: 0.75; margin-top: 2px; }
-  header .date-badge {
-    text-align: right;
-    font-size: 0.85rem;
-    opacity: 0.9;
-    line-height: 1.6;
-  }
-  header .date-badge strong { font-size: 1.1rem; display: block; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand svg { width: 38px; height: 38px; flex-shrink: 0; }
+  header h1 { font-size: 1.25rem; font-weight: 600; }
+  header .sub { font-size: 0.8rem; opacity: 0.7; margin-top: 2px; }
+  .date-info { text-align: right; font-size: 0.85rem; opacity: 0.85; line-height: 1.7; }
+  .date-info strong { font-size: 1.05rem; display: block; }
 
-  /* Metric cards */
-  .metrics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    padding: 1.5rem 2rem 0;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .metric-card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    border: 1px solid #dde3ef;
-    text-align: center;
-  }
-  .metric-card .label {
-    font-size: 0.75rem;
-    color: var(--gray-400);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 6px;
-  }
-  .metric-card .value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--blue-800);
-    line-height: 1;
-  }
-  .metric-card .sub {
-    font-size: 0.75rem;
-    color: var(--gray-400);
-    margin-top: 4px;
-  }
-  .metric-card.highlight { background: var(--blue-50); border-color: var(--blue-200); }
-  .metric-card.highlight .value { color: var(--blue-600); }
-
-  /* Status bar */
-  .status-bar {
-    max-width: 1100px;
-    margin: 1.25rem auto 0;
-    padding: 0 2rem;
+  main {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.8rem;
-    color: var(--gray-400);
+    justify-content: center;
+    padding: 2rem 1rem;
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .status-bar.stale .dot { background: #f59e0b; animation: none; }
-  .status-bar.error .dot { background: #ef4444; animation: none; }
 
-  /* Table section */
-  .table-section {
-    max-width: 1100px;
-    margin: 1rem auto 2rem;
-    padding: 0 2rem;
-  }
-  .section-title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--gray-400);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    margin-bottom: 10px;
-  }
-  .table-wrap {
+  .center-card {
     background: #fff;
-    border-radius: 12px;
-    border: 1px solid #dde3ef;
-    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid #D3E4F5;
+    padding: 2.5rem 3rem;
+    text-align: center;
+    min-width: 320px;
+    max-width: 480px;
+    width: 100%;
   }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    background: var(--blue-800);
-    color: #fff;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-align: left;
-    padding: 11px 14px;
-    letter-spacing: 0.04em;
-  }
-  thead th.center { text-align: center; }
-  .badge-come { display:inline-block; font-size:0.72rem; font-weight:600; background:#EAF3DE; color:#3B6D11; border:1px solid #C0DD97; border-radius:4px; padding:2px 8px; }
-  .badge-notcome { display:inline-block; font-size:0.72rem; font-weight:600; background:#FCEBEB; color:#A32D2D; border:1px solid #F7C1C1; border-radius:4px; padding:2px 8px; }
-  tbody tr { border-bottom: 1px solid #f0f2f8; transition: background 0.15s; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: var(--blue-50); }
-  tbody td { padding: 11px 14px; font-size: 0.875rem; vertical-align: middle; }
-  tbody td.center { text-align: center; }
-  .row-num {
-    font-size: 0.75rem;
-    color: var(--gray-400);
-    font-weight: 500;
-    min-width: 28px;
-  }
-  .hn-chip {
-    font-size: 0.72rem;
-    font-weight: 600;
-    background: var(--gray-50);
-    color: var(--gray-800);
-    border: 1px solid var(--gray-100);
-    border-radius: 4px;
-    padding: 2px 7px;
-    letter-spacing: 0.04em;
-    font-family: monospace;
-  }
-  .time-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+
+  .card-label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--teal-800);
-    background: var(--teal-50);
-    border: 1px solid #9FE1CB;
-    border-radius: 5px;
-    padding: 2px 8px;
+    color: #888780;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
   }
-  .doctor-tag {
-    font-size: 0.78rem;
-    color: var(--blue-600);
+
+  .big-number {
+    font-size: 6rem;
+    font-weight: 700;
+    color: #0C447C;
+    line-height: 1;
+    margin: 0.25rem 0;
+  }
+
+  .unit {
+    font-size: 1.1rem;
+    color: #5F5E5A;
+    margin-bottom: 1.5rem;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #E8EEF8;
+    margin: 1.5rem 0;
+  }
+
+  .date-display {
+    font-size: 1.1rem;
     font-weight: 500;
+    color: #185FA5;
+    margin-bottom: 0.35rem;
   }
-  .name-cell { font-weight: 500; }
 
-  /* Empty/loading states */
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--gray-400);
+  .update-time {
+    font-size: 0.78rem;
+    color: #888780;
   }
-  .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
-  .empty-state p { font-size: 0.9rem; }
 
-  /* Footer */
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 1.25rem;
+    font-size: 0.78rem;
+    color: #888780;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2s infinite;
+  }
+  .dot.stale { background: #f59e0b; animation: none; }
+  .dot.error { background: #ef4444; animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
   footer {
     text-align: center;
     padding: 1rem;
-    font-size: 0.75rem;
-    color: var(--gray-400);
-    border-top: 1px solid #e8eaf0;
+    font-size: 0.72rem;
+    color: #B4B2A9;
   }
 
-  @media (max-width: 640px) {
-    header { padding: 1rem; flex-direction: column; gap: 8px; text-align: center; }
-    .metrics, .table-section, .status-bar { padding: 0 1rem; }
-    .metrics { padding-top: 1rem; }
+  @media (max-width: 480px) {
+    header { flex-direction: column; gap: 8px; text-align: center; }
+    .date-info { text-align: center; }
+    .big-number { font-size: 4.5rem; }
+    .center-card { padding: 2rem 1.5rem; }
   }
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <header>
   <div class="brand">
-    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="18" r="17" fill="#1D4E89" stroke="#85B7EB" stroke-width="1"/>
-      <path d="M12 10c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2 0 2-1 3.5-1.5 5-.5 1.5-.5 3 0 4.5S24 22 24 24c0 2-1.3 3-3 3-1 0-1.8-.5-3-1.5-1.2 1-2 1.5-3 1.5-1.7 0-3-1-3-3 0-2 1-3 1.5-4.5s.5-3 0-4.5S12 12 12 10z" fill="#85B7EB"/>
+    <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="19" cy="19" r="18" fill="#1D4E89" stroke="#85B7EB" stroke-width="1.5"/>
+      <path d="M13 11c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2 0 2-1 3.5-1.5 5-.5 1.5-.5 3 0 4.5S25 23 25 25c0 2-1.3 3-3 3-1 0-1.8-.5-3-1.5-1.2 1-2 1.5-3 1.5-1.7 0-3-1-3-3 0-2 1-3 1.5-4.5s.5-3 0-4.5S13 13 13 11z" fill="#85B7EB"/>
     </svg>
     <div>
       <h1>แผนกทันตกรรม</h1>
-      <div class="subtitle">รายชื่อผู้ป่วยนัดประจำวัน</div>
+      <div class="sub">โรงพยาบาลเลาขวัญ</div>
     </div>
   </div>
-  <div class="date-badge">
+  <div class="date-info">
     <strong id="today-date">—</strong>
-    <span id="today-day">กำลังโหลด...</span>
+    <span id="today-day">—</span>
   </div>
 </header>
 
-<div class="metrics">
-  <div class="metric-card highlight">
-    <div class="label">ผู้ป่วยนัดทั้งหมด</div>
-    <div class="value" id="total-count">—</div>
-    <div class="sub">คน</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">แพทย์ที่รับนัด</div>
-    <div class="value" id="doctor-count">—</div>
-    <div class="sub">ท่าน</div>
-  </div>
-  <div class="metric-card" style="border-color:#C0DD97;">
-    <div class="label">มาแล้ว</div>
-    <div class="value" style="color:#3B6D11" id="arrived-count">—</div>
-    <div class="sub">คน</div>
-  </div>
-  <div class="metric-card" style="border-color:#F7C1C1;">
-    <div class="label">ยังไม่มา</div>
-    <div class="value" style="color:#A32D2D" id="pending-count">—</div>
-    <div class="sub">คน</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">เวลานัดแรก</div>
-    <div class="value" style="font-size:1.3rem" id="first-time">—</div>
-    <div class="sub">น.</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">อัพเดทล่าสุด</div>
-    <div class="value" style="font-size:1.1rem" id="last-update">—</div>
-    <div class="sub" id="update-source">—</div>
-  </div>
-</div>
+<main>
+  <div class="center-card">
+    <div class="card-label">ผู้ป่วยนัดวันนี้</div>
+    <div class="big-number" id="total-count">—</div>
+    <div class="unit">ราย</div>
 
-<div class="status-bar" id="status-bar">
-  <div class="dot"></div>
-  <span id="status-text">กำลังโหลดข้อมูล...</span>
-</div>
+    <hr class="divider">
 
-<div class="table-section">
-  <div class="section-title">รายชื่อผู้ป่วยนัดวันนี้</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th class="center" style="width:44px">#</th>
-          <th style="width:100px">HN</th>
-          <th>ชื่อ-นามสกุล</th>
-          <th style="width:110px">เวลานัด</th>
-          <th>ทันตแพทย์</th>
-          <th class="center" style="width:100px">สถานะ</th>
-        </tr>
-      </thead>
-      <tbody id="patient-tbody">
-        <tr>
-          <td colspan="5">
-            <div class="empty-state">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-              <p>กำลังโหลดข้อมูลจาก Server...</p>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="date-display" id="data-date">—</div>
+    <div class="update-time">อัพเดทล่าสุด <span id="update-time">—</span> น.</div>
+
+    <div class="status-row">
+      <div class="dot" id="status-dot"></div>
+      <span id="status-text">กำลังโหลด...</span>
+    </div>
   </div>
-</div>
+</main>
 
 <footer>
-  ข้อมูลจากระบบ HosXP · โรงพยาบาลลาดกว้าน · รีเฟรชอัตโนมัติทุก 5 นาที ช่วง 07:00–08:00 น.
+  ข้อมูลจากระบบ HosXP · อัพเดทอัตโนมัติทุก 5 นาที ช่วง 07:00–08:00 น.
 </footer>
 
 <script>
@@ -291,62 +170,19 @@ const DATA_URL = 'data/dental_today.json';
 const thaiDays = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 const thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-function formatThaiDate(d) {
+function thaiDate(d) {
   return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
 function setHeader() {
   const now = new Date();
-  document.getElementById('today-date').textContent = formatThaiDate(now);
-  document.getElementById('today-day').textContent = `วัน${thaiDays[now.getDay()]}`;
-}
-
-function renderTable(patients) {
-  const tbody = document.getElementById('patient-tbody');
-  if (!patients || patients.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      <p>ไม่มีข้อมูลผู้ป่วยนัดสำหรับวันนี้</p></div></td></tr>`;
-    return;
-  }
-  const arrivedCount = patients.filter(p => p.visit_count > 0).length;
-  const pendingCount = patients.length - arrivedCount;
-  document.getElementById('arrived-count').textContent = arrivedCount;
-  document.getElementById('pending-count').textContent = pendingCount;
-
-  tbody.innerHTML = patients.map((p, i) => {
-    const came = p.visit_count > 0;
-    const badge = came
-      ? `<span class="badge-come">✓ มาแล้ว</span>`
-      : `<span class="badge-notcome">✗ ยังไม่มา</span>`;
-    return `<tr>
-      <td class="center row-num">${i + 1}</td>
-      <td><span class="hn-chip">${p.hn || '—'}</span></td>
-      <td class="name-cell">${p.fullname || '—'}</td>
-      <td class="center"><span class="time-chip">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        ${(p.nexttime || '').substring(0,5) || '—'}
-      </span></td>
-      <td class="doctor-tag">${p.doctor_name || p.doctor || '—'}</td>
-      <td class="center">${badge}</td>
-    </tr>`;
-  }).join('');
-}
-
-function updateMetrics(data) {
-  document.getElementById('total-count').textContent = data.patients ? data.patients.length : 0;
-  const doctors = new Set((data.patients || []).map(p => p.doctor_name || p.doctor).filter(Boolean));
-  document.getElementById('doctor-count').textContent = doctors.size;
-  const times = (data.patients || []).map(p => p.nexttime).filter(Boolean).sort();
-  document.getElementById('first-time').textContent = times.length ? times[0].substring(0,5) : '—';
-  document.getElementById('last-update').textContent = data.generated_at
-    ? data.generated_at.substring(11, 16) : '—';
-  document.getElementById('update-source').textContent = 'น. (เวลาที่สร้างไฟล์)';
+  document.getElementById('today-date').textContent = thaiDate(now);
+  document.getElementById('today-day').textContent = 'วัน' + thaiDays[now.getDay()];
 }
 
 function setStatus(type, text) {
-  const bar = document.getElementById('status-bar');
-  bar.className = 'status-bar ' + (type === 'ok' ? '' : type);
+  const dot = document.getElementById('status-dot');
+  dot.className = 'dot' + (type !== 'ok' ? ' ' + type : '');
   document.getElementById('status-text').textContent = text;
 }
 
@@ -356,44 +192,40 @@ async function loadData() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
-    const today = new Date().toISOString().substring(0, 10);
-    if (data.date && data.date !== today) {
-      setStatus('stale', `ข้อมูลวันที่ ${data.date} (ยังไม่มีข้อมูลวันนี้)`);
-    } else {
-      setStatus('ok', `โหลดสำเร็จ · ${data.patients ? data.patients.length : 0} รายการ · อัพเดทอีกครั้ง ${getNextRefreshText()}`);
+    document.getElementById('total-count').textContent = data.total_count ?? '—';
+
+    if (data.date) {
+      const d = new Date(data.date);
+      document.getElementById('data-date').textContent =
+        `ประจำวัน${thaiDays[d.getDay()]}ที่ ${thaiDate(d)}`;
     }
 
-    renderTable(data.patients || []);
-    updateMetrics(data);
+    if (data.generated_at) {
+      document.getElementById('update-time').textContent =
+        data.generated_at.substring(11, 16);
+    }
+
+    const today = new Date().toISOString().substring(0, 10);
+    if (data.date && data.date !== today) {
+      setStatus('stale', `ข้อมูลวันที่ ${data.date} — ยังไม่มีข้อมูลวันนี้`);
+    } else {
+      setStatus('ok', 'ข้อมูลล่าสุด · รีเฟรชอัตโนมัติทุก 5 นาที');
+    }
   } catch (e) {
-    setStatus('error', 'ไม่สามารถโหลดข้อมูลได้: ' + e.message);
-    document.getElementById('patient-tbody').innerHTML = `<tr><td colspan="5"><div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <p>ไม่พบไฟล์ข้อมูล กรุณาตรวจสอบ Script บน Server</p></div></td></tr>`;
+    document.getElementById('total-count').textContent = '—';
+    setStatus('error', 'โหลดไม่ได้: ' + e.message);
   }
 }
 
-function getNextRefreshText() {
-  const now = new Date();
-  const next = new Date(now);
-  next.setMinutes(Math.ceil(now.getMinutes() / 5) * 5, 0, 0);
-  return next.toTimeString().substring(0, 5) + ' น.';
-}
-
-function shouldAutoRefresh() {
-  const now = new Date();
-  const h = now.getHours(), m = now.getMinutes();
-  const total = h * 60 + m;
-  return total >= 7 * 60 && total < 8 * 60;
+function shouldRefresh() {
+  const t = new Date();
+  const m = t.getHours() * 60 + t.getMinutes();
+  return m >= 420 && m < 480;
 }
 
 setHeader();
 loadData();
-
-setInterval(() => {
-  if (shouldAutoRefresh()) loadData();
-}, 5 * 60 * 1000);
-
+setInterval(() => { if (shouldRefresh()) loadData(); }, 5 * 60 * 1000);
 setInterval(setHeader, 60000);
 </script>
 </body>

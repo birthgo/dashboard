@@ -2,13 +2,10 @@
 <?php
 /**
  * export_dental.php
- * ดึงข้อมูลผู้ป่วยนัดแผนกทันตกรรมจาก HosXP และสร้าง JSON
- *
- * รันโดย cron บน Slave 2 (172.16.16.155)
- * Cron: ทุก 5 นาที ช่วง 07:00-08:00 และครั้งเดียว 07:00 สำหรับรายชื่อนัด
+ * ดึงเฉพาะยอดรวมผู้ป่วยนัดทันตกรรม ไม่มีชื่อคนไข้
+ * ปลอดภัยสำหรับ push ขึ้น GitHub Public
  */
 
-// ─── Config จาก .env ───────────────────────────────────────────────────────
 $envFile = __DIR__ . '/.env';
 if (!file_exists($envFile)) {
     die("ERROR: ไม่พบ .env file ที่ {$envFile}\n");
@@ -21,8 +18,7 @@ $DB_NAME = $env['DB_NAME'] ?? 'lkhos';
 $DB_USER = $env['DB_USER'] ?? '';
 $DB_PASS = $env['DB_PASS'] ?? '';
 
-// GitHub config
-$GIT_REPO_PATH = $env['GIT_REPO_PATH'] ?? '/opt/dental-dashboard';
+$GIT_REPO_PATH = $env['GIT_REPO_PATH'] ?? '/var/www/html/dental-dashboard';
 $PUSH_BRANCH   = $env['GIT_BRANCH'] ?? 'main';
 
 // ─── Database Connection ────────────────────────────────────────────────────
@@ -41,75 +37,36 @@ try {
     die("ERROR: DB connection failed: " . $e->getMessage() . "\n");
 }
 
-// ─── Query ─────────────────────────────────────────────────────────────────
 $today = date('Y-m-d');
 
-/**
- * ดึงรายชื่อผู้ป่วยนัดทันตกรรมวันนี้
- * - clinic = '1D' คือรหัสทันตกรรมของ HosXP (ปรับตามโรงพยาบาล)
- * - JOIN กับ patient เพื่อดึงชื่อ-นามสกุล
- * - JOIN กับ doctor เพื่อดึงชื่อทันตแพทย์
- */
+// ─── Query เฉพาะยอดรวม ────────────────────────────────────────────────────
 $sql = "
-    SELECT
-        o.hn,
-        CONCAT(
-            CASE pt.pname
-                WHEN '1' THEN 'นาย '
-                WHEN '2' THEN 'นาง '
-                WHEN '3' THEN 'น.ส. '
-                WHEN '4' THEN 'นาง '
-                WHEN '6' THEN 'ด.ช. '
-                WHEN '7' THEN 'ด.ญ. '
-                ELSE ''
-            END,
-            pt.fname, ' ', pt.lname
-        ) AS fullname,
-        o.nexttime,
-        o.doctor,
-        d.name AS doctor_name,
-        (SELECT COUNT(*) FROM lkhos.ovst
-         WHERE hn = o.hn AND vstdate = o.nextdate) AS visit_count
-    FROM lkhos.oapp o
-    LEFT JOIN lkhos.patient pt ON pt.hn = o.hn
-    LEFT JOIN lkhos.doctor d   ON d.code = o.doctor
-    WHERE o.nextdate = :today
-      AND o.spclty = '11'
-    ORDER BY o.nexttime ASC, o.hn ASC
-";
-
-/* spclty = '11' คือรหัสแผนกทันตกรรม รพ.เลาขวัญ (ยืนยันจากไฟล์ dentalappointmentlist.php) */
-
-try {
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([':today' => $today]);
-    $patients = $stmt->fetchAll();
-} catch (PDOException $e) {
-    die("ERROR: Query failed: " . $e->getMessage() . "\n");
-}
-
-// ─── Count query (จำนวนรวม อัพเดททุก 5 นาที) ───────────────────────────────
-$sqlCount = "
     SELECT COUNT(*) AS total
     FROM lkhos.oapp
     WHERE nextdate = :today
       AND spclty = '11'
 ";
-$stmtCount = $pdo->prepare($sqlCount);
-$stmtCount->execute([':today' => $today]);
-$countRow = $stmtCount->fetch();
 
-// ─── Build JSON ─────────────────────────────────────────────────────────────
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':today' => $today]);
+    $row = $stmt->fetch();
+} catch (PDOException $e) {
+    die("ERROR: Query failed: " . $e->getMessage() . "\n");
+}
+
+$total = (int)$row['total'];
+
+// ─── Build JSON (ไม่มีชื่อคนไข้) ────────────────────────────────────────────
 $output = [
     'date'         => $today,
     'generated_at' => date('Y-m-d H:i:s'),
-    'total_count'  => (int)$countRow['total'],
-    'patients'     => $patients,
+    'total_count'  => $total,
 ];
 
 $json = json_encode($output, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
-// ─── Write JSON file ─────────────────────────────────────────────────────────
+// ─── Write JSON ──────────────────────────────────────────────────────────────
 $dataDir  = "{$GIT_REPO_PATH}/data";
 $jsonFile = "{$dataDir}/dental_today.json";
 
@@ -118,7 +75,7 @@ if (!is_dir($dataDir)) {
 }
 
 file_put_contents($jsonFile, $json);
-echo "[" . date('H:i:s') . "] เขียน JSON สำเร็จ: {$jsonFile} ({$countRow['total']} ราย)\n";
+echo "[" . date('H:i:s') . "] เขียน JSON สำเร็จ: {$jsonFile} (ยอดรวม {$total} ราย)\n";
 
 // ─── Git Push ────────────────────────────────────────────────────────────────
 $commands = [
@@ -131,5 +88,4 @@ $commands = [
 $cmd = implode(' && ', $commands);
 $result = shell_exec($cmd);
 echo "[" . date('H:i:s') . "] Git push: " . trim($result ?? 'no output') . "\n";
-
 echo "[" . date('H:i:s') . "] เสร็จสิ้น\n";
