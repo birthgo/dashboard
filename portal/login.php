@@ -16,18 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === '' || $password === '') {
         $error = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
     } else {
-        $user = authenticate($username, $password);
-        if ($user) {
-            $_SESSION['portal_user'] = [
-                'id'           => $user['id'],
-                'username'     => $user['username'],
-                'doctor_code'  => $user['doctor_code'],
-                'display_name' => $user['display_name'],
-            ];
-            header('Location: index.php');
-            exit;
-        } else {
-            $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+        try {
+            $user = authenticate($username, $password);
+            if ($user) {
+                $_SESSION['portal_user'] = [
+                    'id'              => $user['id'],
+                    'username'        => $user['username'],
+                    'doctor_code'     => $user['doctor_code'],
+                    'display_name'    => $user['display_name'],
+                    'must_change_pwd' => (int)$user['must_change_pwd'],
+                ];
+                header('Location: ' . ($user['must_change_pwd'] ? 'change_password.php' : 'index.php'));
+                exit;
+            } else {
+                $error = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+            }
+        } catch (LockedOutException $e) {
+            $error = "เข้าสู่ระบบผิดหลายครั้งเกินไป กรุณารออีก {$e->minutesRemaining} นาทีแล้วลองใหม่";
         }
     }
 }
