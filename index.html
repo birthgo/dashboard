@@ -30,6 +30,7 @@
   header .sub { font-size: 0.8rem; opacity: 0.7; margin-top: 2px; }
   .date-info { text-align: right; font-size: 0.85rem; opacity: 0.85; line-height: 1.7; }
   .date-info strong { font-size: 1.05rem; display: block; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 
   main {
     flex: 1;
@@ -116,11 +117,35 @@
     color: #B4B2A9;
   }
 
+  .portal-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    background: rgba(255,255,255,.12);
+    border: 1.5px solid rgba(255,255,255,.3);
+    border-radius: 20px;
+    color: #fff;
+    font-family: 'Sarabun', sans-serif;
+    font-size: .85rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+    white-space: nowrap;
+  }
+  .portal-btn:hover {
+    background: rgba(255,255,255,.22);
+    border-color: rgba(255,255,255,.6);
+  }
+  .portal-btn svg { width: 15px; height: 15px; fill: rgba(255,255,255,.85); flex-shrink: 0; }
+
   @media (max-width: 480px) {
-    header { flex-direction: column; gap: 8px; text-align: center; }
+    header { flex-direction: column; gap: 10px; text-align: center; }
     .date-info { text-align: center; }
     .big-number { font-size: 4.5rem; }
     .center-card { padding: 2rem 1.5rem; }
+    .header-right { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   }
 </style>
 </head>
@@ -137,9 +162,15 @@
       <div class="sub">โรงพยาบาลเลาขวัญ</div>
     </div>
   </div>
-  <div class="date-info">
-    <strong id="today-date">—</strong>
-    <span id="today-day">—</span>
+  <div class="header-right">
+    <div class="date-info">
+      <strong id="today-date">—</strong>
+      <span id="today-day">—</span>
+    </div>
+    <a class="portal-btn" href="portal/login.php">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+      เข้าสู่ระบบแพทย์
+    </a>
   </div>
 </header>
 
