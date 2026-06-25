@@ -22,17 +22,18 @@ if (file_exists($envFile)) {
 
 // ─── รายชื่อทันตแพทย์ทั้งหมด ──────────────────────────
 // username = doctor_code, password เริ่มต้น = doctor_code
+// แต่ละหมอ: username (สำหรับ login เท่านั้น) => [doctor_code (ใช้ map กับ a.doctor ใน oapp), display_name]
 const DOCTORS = [
-    '0675' => 'ทพ.เจษฎา ไกรลาส',
-    '0237' => 'ทพญ.ธนภรณ์ ลิมปอารยะกุล',
-    '0739' => 'ทพ.ฐิติพงศ์ คำห้าง',
-    '0768' => 'ทพญ.ฐิตาพร แจ่มจันทร์เกษม',
-    '0772' => 'ทพญ.อาทิตยา คล้ำบู่',
-    '0797' => 'ทพญ.ภัทริน เถี่ยนมิตรภาพ',
-    '0730' => 'นส.ชนนิกานต์ วิมาลา',
-    '0731' => 'นส.พจนรรถ จงสัมฤทธิ์ผลดี',
-    '0749' => 'นส.ศุภาพิชญ์ แสงอินทร์',
-    '0778' => 'นส.อติกานต์ แก้วเณร',
+    '13300' => ['doctor_code' => '0675', 'name' => 'ทพ.เจษฎา ไกรลาส'],
+    '15821' => ['doctor_code' => '0237', 'name' => 'ทพญ.ธนภรณ์ ลิมปอารยะกุล'],
+    '12541' => ['doctor_code' => '0739', 'name' => 'ทพ.ฐิติพงศ์ คำห้าง'],
+    '21336' => ['doctor_code' => '0768', 'name' => 'ทพญ.ฐิตาพร แจ่มจันทร์เกษม'],
+    '20196' => ['doctor_code' => '0772', 'name' => 'ทพญ.อาทิตยา คล้ำบู่'],
+    '13804' => ['doctor_code' => '0797', 'name' => 'ทพญ.ภัทริน เถี่ยนมิตรภาพ'],
+    '0730'  => ['doctor_code' => '0730', 'name' => 'นส.ชนนิกานต์ วิมาลา'],
+    '0731'  => ['doctor_code' => '0731', 'name' => 'นส.พจนรรถ จงสัมฤทธิ์ผลดี'],
+    '0749'  => ['doctor_code' => '0749', 'name' => 'นส.ศุภาพิชญ์ แสงอินทร์'],
+    '0778'  => ['doctor_code' => '0778', 'name' => 'นส.อติกานต์ แก้วเณร'],
 ];
 
 function getPortalDB(): PDO {
@@ -79,12 +80,12 @@ function getPortalDB(): PDO {
             'INSERT OR IGNORE INTO users (username, password, doctor_code, display_name, must_change_pwd)
              VALUES (:u, :p, :doc, :name, 1)'
         );
-        foreach (DOCTORS as $code => $name) {
+        foreach (DOCTORS as $username => $info) {
             $insert->execute([
-                ':u'    => $code,
-                ':p'    => password_hash($code, PASSWORD_BCRYPT), // รหัสผ่านเริ่มต้น = doctor_code
-                ':doc'  => $code,
-                ':name' => $name,
+                ':u'    => $username,
+                ':p'    => password_hash($username, PASSWORD_BCRYPT), // รหัสผ่านเริ่มต้น = username
+                ':doc'  => $info['doctor_code'],
+                ':name' => $info['name'],
             ]);
         }
     }
@@ -254,11 +255,11 @@ if (PHP_SAPI === 'cli' && isset($argv[1])) {
         echo "Password updated for '{$argv[2]}'.\n";
 
     } elseif ($argv[1] === 'reset' && isset($argv[2])) {
-        $code = $argv[2];
-        $hash = password_hash($code, PASSWORD_BCRYPT);
+        $username = $argv[2];
+        $hash = password_hash($username, PASSWORD_BCRYPT);
         $pdo->prepare('UPDATE users SET password = ?, must_change_pwd = 1 WHERE username = ?')
-            ->execute([$hash, $code]);
-        echo "Password reset to doctor_code for '{$code}'. ผู้ใช้จะถูกบังคับเปลี่ยน password ตอน login ครั้งถัดไป.\n";
+            ->execute([$hash, $username]);
+        echo "Password reset to default (= username) for '{$username}'. ผู้ใช้จะถูกบังคับเปลี่ยน password ตอน login ครั้งถัดไป.\n";
 
     } elseif ($argv[1] === 'unlock' && isset($argv[2])) {
         $code = $argv[2];

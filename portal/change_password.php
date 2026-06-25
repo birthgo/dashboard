@@ -28,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
     } elseif (strlen($new) < 6) {
         $error = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร';
-    } elseif ($new === $user['doctor_code']) {
-        $error = 'กรุณาตั้งรหัสผ่านใหม่ที่ไม่ใช่รหัสแพทย์เดิม';
+    } elseif ($new === $user['username']) {
+        $error = 'กรุณาตั้งรหัสผ่านใหม่ที่ไม่ใช่รหัสผ่านเริ่มต้นเดิม';
     } elseif ($new !== $confirm) {
         $error = 'รหัสผ่านใหม่และยืนยันรหัสผ่านไม่ตรงกัน';
     } else {
@@ -227,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="new_password">รหัสผ่านใหม่</label>
         <input type="password" id="new_password" name="new_password"
                autocomplete="new-password" required>
-        <div class="hint">อย่างน้อย 6 ตัวอักษร และต้องไม่ใช่รหัสแพทย์เดิม</div>
+        <div class="hint">อย่างน้อย 6 ตัวอักษร และต้องไม่ใช่รหัสผ่านเริ่มต้นเดิม</div>
       </div>
       <div class="form-group">
         <label for="confirm_password">ยืนยันรหัสผ่านใหม่</label>
