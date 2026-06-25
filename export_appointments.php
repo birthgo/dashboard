@@ -25,6 +25,32 @@ $dbname = $_ENV['DB_NAME']   ?? 'lkhos';
 $user   = $_ENV['DB_USER']   ?? 'adminwork';
 $pass   = $_ENV['DB_PASS']   ?? '';
 
+/**
+ * แปลง string จาก TIS-620 (encoding เดิมของ HosXP) เป็น UTF-8
+ * ถ้าเป็น UTF-8 อยู่แล้ว (valid) จะคืนค่าเดิมไม่แปลงซ้ำ กัน double-encode
+ * ถ้าแปลงไม่ได้เลย จะคืน string เปล่าเพื่อไม่ทำให้ json_encode ทั้งไฟล์พังไปด้วย
+ */
+function toUtf8(?string $value): string {
+    if ($value === null || $value === '') {
+        return '';
+    }
+    // ถ้าเป็น UTF-8 ที่ถูกต้องอยู่แล้ว ไม่ต้องแปลง (กัน double-encode ถ้า column บางตัวเก็บ UTF-8 จริงๆ)
+    if (mb_check_encoding($value, 'UTF-8')) {
+        return $value;
+    }
+    $converted = @iconv('TIS-620', 'UTF-8', $value);
+    if ($converted !== false) {
+        return $converted;
+    }
+    // ลอง CP874 (Windows Thai) เป็นตัวสำรอง เผื่อบางคอลัมน์เก็บมาจากโปรแกรมฝั่ง Windows
+    $converted = @iconv('CP874', 'UTF-8', $value);
+    if ($converted !== false) {
+        return $converted;
+    }
+    // แปลงไม่ได้เลยทั้งสองทาง — ตัด byte ที่ทำให้ invalid ทิ้งเพื่อไม่ให้ json_encode ทั้งไฟล์ล้ม
+    return mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+}
+
 try {
     $pdo = new PDO(
         "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4",
@@ -81,11 +107,11 @@ foreach ($rows as $row) {
     $byDoctor[$doc][$date][] = [
         'oapp_id'      => $row['oapp_id'],
         'hn'           => $row['hn'],
-        'patient_name' => $row['patient_name'],
-        'hometel'      => $row['hometel'],
+        'patient_name' => toUtf8($row['patient_name']),
+        'hometel'      => $row['hometel'], // เบอร์โทรเป็นตัวเลข ไม่ต้องแปลง encoding
         'nexttime'     => substr($row['nexttime'], 0, 5), // HH:MM
-        'note'         => $row['note'],
-        'doctor_name'  => $row['doctor_name'],
+        'note'         => toUtf8($row['note']),
+        'doctor_name'  => toUtf8($row['doctor_name']),
     ];
 }
 
