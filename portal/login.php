@@ -217,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </svg>
     </div>
     <h1>คลินิกทันตกรรม</h1>
-    <p>ระบบดูข้อมูลนัดหมายสำหรับทันตแพทย์<br><small style="opacity:.6;font-size:.75rem">ใช้รหัสแพทย์เป็น Username และ Password</small></p>
+    <p>ระบบดูข้อมูลนัดหมายสำหรับทันตแพทย์</p>
   </div>
 
   <div class="card-body">
@@ -234,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           name="username"
           value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
           autocomplete="username"
-          placeholder="เช่น 0675"
+          placeholder="ชื่อผู้ใช้"
           required
           autofocus
         >
@@ -246,7 +246,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           id="password"
           name="password"
           autocomplete="current-password"
-          placeholder="รหัสผ่านเริ่มต้น = รหัสแพทย์"
+          placeholder="รหัสผ่าน"
           required
         >
       </div>
