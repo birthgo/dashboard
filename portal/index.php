@@ -291,8 +291,14 @@ $maxDate = date('Y-m-d', strtotime('+30 days'));
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Table */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   table {
     width: 100%;
+    min-width: 560px;
     border-collapse: collapse;
   }
 
@@ -364,6 +370,17 @@ $maxDate = date('Y-m-d', strtotime('+30 days'));
     color: var(--slate);
     font-size: .85rem;
     font-style: italic;
+  }
+
+  /* ─── Mobile ─────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .topbar { padding: 0 14px; }
+    .topbar-title { font-size: .85rem; }
+    .doctor-name { display: none; }
+    .container { padding: 20px 12px 40px; }
+    .date-card { padding: 18px 16px; gap: 14px; }
+    .apt-header { padding: 16px 18px; }
+    .update-info { margin-left: 0; width: 100%; }
   }
 </style>
 </head>
@@ -501,18 +518,20 @@ async function load(date) {
     }).join('');
 
     document.getElementById('apt-body').innerHTML = `
-      <table>
-        <thead>
-          <tr>
-            <th style="width:40px">#</th>
-            <th style="width:80px">เวลา</th>
-            <th>ชื่อ-สกุล</th>
-            <th style="width:130px">โทรศัพท์</th>
-            <th>หมายเหตุ</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th style="width:80px">เวลา</th>
+              <th>ชื่อ-สกุล</th>
+              <th style="width:130px">โทรศัพท์</th>
+              <th>หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
 
   } catch(e) {
     document.getElementById('apt-body').innerHTML = `
