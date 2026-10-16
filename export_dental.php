@@ -1,5 +1,6 @@
 #!/usr/bin/env php
 <?php
+date_default_timezone_set('Asia/Bangkok');
 /**
  * export_dental.php
  * ดึงเฉพาะยอดรวมผู้ป่วยนัดทันตกรรม ไม่มีชื่อคนไข้
@@ -41,15 +42,28 @@ $today = date('Y-m-d');
 
 // ─── Query เฉพาะยอดรวม ────────────────────────────────────────────────────
 $sql = "
-    SELECT COUNT(*) AS total
-    FROM lkhos.oapp
-    WHERE nextdate = :today
-      AND spclty = '11'
+    SELECT COUNT(DISTINCT dental.vn) AS total
+    FROM (
+        SELECT v.vn
+        FROM lkhos.ovst v
+        INNER JOIN lkhos.kskdepartment k ON k.depcode = v.main_dep
+        INNER JOIN lkhos.spclty s ON s.spclty = k.spclty
+        WHERE v.vstdate = :department_date
+          AND s.spclty = '11'
+          AND s.name IS NOT NULL
+
+        UNION
+
+        SELECT d.vn
+        FROM lkhos.dtmain d
+        INNER JOIN lkhos.ovst v ON v.vn = d.vn
+        WHERE v.vstdate = :dental_date
+    ) AS dental
 ";
 
 try {
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([':today' => $today]);
+    $stmt->execute([':department_date' => $today, ':dental_date' => $today]);
     $row = $stmt->fetch();
 } catch (PDOException $e) {
     die("ERROR: Query failed: " . $e->getMessage() . "\n");
