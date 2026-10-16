@@ -5,12 +5,10 @@ requireLogin();
 $user = currentUser();
 $today   = date('Y-m-d');
 $maxDate = date('Y-m-d', strtotime('+30 days'));
-require_once __DIR__ . '/../../SSO/csrf.php';
 ?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<?php csrf_client(); ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ตารางนัด — <?= htmlspecialchars($user['display_name']) ?></title>
@@ -399,7 +397,7 @@ require_once __DIR__ . '/../../SSO/csrf.php';
       <div class="doctor-avatar" id="avatar-initials">—</div>
       <span class="doctor-name"><?= htmlspecialchars($user['display_name']) ?></span>
     </div>
-    <a href="logout.php" onclick="return csrfLogout(this.href)" class="btn-logout">ออกจากระบบ</a>
+    <a href="logout.php" class="btn-logout">ออกจากระบบ</a>
   </div>
 </nav>
 
