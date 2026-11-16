@@ -1,98 +1,30 @@
 <?php
 /**
  * portal/auth.php
- * - username = doctor_code (เช่น 0675)
- * - password เริ่มต้น = doctor_code เหมือนกัน (เปลี่ยนได้ภายหลัง)
- * - users ถูก seed อัตโนมัติเมื่อเปิดระบบครั้งแรก
+ * - Existing doctor accounts and mappings come from the private SQLite snapshot.
+ * - Existing hashes, force-change flags and lockout history are preserved.
+ * - migration requires an existing private SQLite database; never seeds accounts.
  */
 
+require_once dirname(__DIR__) . '/runtime.php';
 date_default_timezone_set('Asia/Bangkok');
-session_start();
-
-// โหลด .env จาก root
-$envFile = dirname(__DIR__) . '/.env';
-if (file_exists($envFile)) {
-    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-        if (str_starts_with(trim($line), '#')) continue;
-        if (!str_contains($line, '=')) continue;
-        [$k, $v] = array_map('trim', explode('=', $line, 2));
-        $_ENV[$k] = $v;
-    }
+// Portal keeps its own existing authentication; it does not share an SSO session.
+if (PHP_SAPI !== 'cli') {
+    set_exception_handler(static function(Throwable $e): void {
+        error_log('Dashboard portal unavailable; type='.get_class($e));
+        http_response_code(503);
+        header('Cache-Control: no-store');
+        if(str_contains($_SERVER['SCRIPT_NAME']??'','/api/')){
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error'=>'Portal ยังไม่พร้อมใช้งาน กรุณาแจ้งผู้ดูแล'],JSON_UNESCAPED_UNICODE);
+        }else echo 'Portal ยังไม่พร้อมใช้งาน กรุณาแจ้งผู้ดูแล';
+    });
+    try { DashboardRuntime::startSession(); }
+    catch (Throwable $e) { http_response_code(503); exit('Portal ยังไม่พร้อมใช้งาน กรุณาแจ้งผู้ดูแล'); }
 }
-
-// ─── รายชื่อทันตแพทย์ทั้งหมด ──────────────────────────
-// username = doctor_code, password เริ่มต้น = doctor_code
-// แต่ละหมอ: username (สำหรับ login เท่านั้น) => [doctor_code (ใช้ map กับ a.doctor ใน oapp), display_name]
-const DOCTORS = [
-    '13300' => ['doctor_code' => '0675', 'name' => 'ทพ.เจษฎา ไกรลาส'],
-    '15821' => ['doctor_code' => '0237', 'name' => 'ทพญ.ธนภรณ์ ลิมปอารยะกุล'],
-    '12541' => ['doctor_code' => '0739', 'name' => 'ทพ.ฐิติพงศ์ คำห้าง'],
-    '21336' => ['doctor_code' => '0768', 'name' => 'ทพญ.ฐิตาพร แจ่มจันทร์เกษม'],
-    '20196' => ['doctor_code' => '0772', 'name' => 'ทพญ.อาทิตยา คล้ำบู่'],
-    '13804' => ['doctor_code' => '0797', 'name' => 'ทพญ.ภัทริน เถี่ยนมิตรภาพ'],
-    '0730'  => ['doctor_code' => '0730', 'name' => 'นส.ชนนิกานต์ วิมาลา'],
-    '0731'  => ['doctor_code' => '0731', 'name' => 'นส.พจนรรถ จงสัมฤทธิ์ผลดี'],
-    '0749'  => ['doctor_code' => '0749', 'name' => 'นส.ศุภาพิชญ์ แสงอินทร์'],
-    '0778'  => ['doctor_code' => '0778', 'name' => 'นส.อติกานต์ แก้วเณร'],
-];
-
 function getPortalDB(): PDO {
-    $dbPath = dirname(__DIR__) . '/data/portal_users.sqlite';
-    $isNew  = !file_exists($dbPath);
-
-    $pdo = new PDO('sqlite:' . $dbPath);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 5); // รอ lock ปลดสูงสุด 5 วินาทีก่อน throw
-    $pdo->exec("PRAGMA journal_mode = WAL");  // ลด 'database is locked' จาก concurrent requests
-
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS users (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            username        TEXT UNIQUE NOT NULL,
-            password        TEXT NOT NULL,
-            doctor_code     TEXT NOT NULL,
-            display_name    TEXT NOT NULL,
-            must_change_pwd INTEGER NOT NULL DEFAULT 1,
-            created_at      TEXT DEFAULT (datetime('now','localtime'))
-        )
-    ");
-
-    // เผื่อ DB เก่าที่สร้างไว้ก่อนมีคอลัมน์นี้
-    $cols = $pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_COLUMN, 1);
-    if (!in_array('must_change_pwd', $cols, true)) {
-        $pdo->exec("ALTER TABLE users ADD COLUMN must_change_pwd INTEGER NOT NULL DEFAULT 1");
-    }
-
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS login_attempts (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            username     TEXT NOT NULL,
-            ip           TEXT NOT NULL,
-            success      INTEGER NOT NULL,
-            attempted_at TEXT DEFAULT (datetime('now','localtime'))
-        )
-    ");
-    $pdo->exec("CREATE INDEX IF NOT EXISTS idx_attempts_lookup ON login_attempts(username, ip, attempted_at)");
-
-    // Seed users เฉพาะตอนสร้าง DB ใหม่ครั้งแรกเท่านั้น (กัน lock จากการ INSERT OR IGNORE ทุก request)
-    if ($isNew) {
-        $insert = $pdo->prepare(
-            'INSERT OR IGNORE INTO users (username, password, doctor_code, display_name, must_change_pwd)
-             VALUES (:u, :p, :doc, :name, 1)'
-        );
-        foreach (DOCTORS as $username => $info) {
-            $insert->execute([
-                ':u'    => $username,
-                ':p'    => password_hash($username, PASSWORD_BCRYPT), // รหัสผ่านเริ่มต้น = username
-                ':doc'  => $info['doctor_code'],
-                ':name' => $info['name'],
-            ]);
-        }
-    }
-
-    return $pdo;
+    return DashboardRuntime::portalDatabase();
 }
-
 // ─── Rate limiting ──────────────────────────────────────────
 // ล็อก username+IP ชั่วคราวถ้า login ผิดเกิน MAX_ATTEMPTS ครั้ง ภายใน WINDOW_MINUTES
 const MAX_ATTEMPTS   = 5;
@@ -188,14 +120,27 @@ class LockedOutException extends \Exception {
 }
 
 function requireLogin(): void {
-    if (empty($_SESSION['portal_user'])) {
+    $api = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/api/');
+    $user = currentUser();
+    if (!$user) {
+        if ($api) {
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error'=>'unauthorized']);
+            exit;
+        }
         header('Location: login.php');
         exit;
     }
-    $user = currentUser();
     // บังคับเปลี่ยน password ครั้งแรก ก่อนเข้าใช้งานหน้าอื่น
     $currentFile = basename($_SERVER['SCRIPT_NAME']);
     if (!empty($user['must_change_pwd']) && $currentFile !== 'change_password.php') {
+        if ($api) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error'=>'password_change_required']);
+            exit;
+        }
         header('Location: change_password.php');
         exit;
     }
@@ -222,11 +167,15 @@ function currentUser(): ?array {
     }
     // sync must_change_pwd ล่าสุดจาก DB เข้า session กัน flag ค้างหลังเปลี่ยน password
     $pdo  = getPortalDB();
-    $stmt = $pdo->prepare('SELECT must_change_pwd FROM users WHERE username = ?');
+    $stmt = $pdo->prepare('SELECT id,username,doctor_code,display_name,must_change_pwd FROM users WHERE username = ?');
     $stmt->execute([$_SESSION['portal_user']['username']]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row !== false) {
-        $_SESSION['portal_user']['must_change_pwd'] = (int)$row['must_change_pwd'];
+        $row['must_change_pwd'] = (int)$row['must_change_pwd'];
+        $_SESSION['portal_user'] = $row;
+    } else {
+        unset($_SESSION['portal_user']);
+        return null;
     }
     return $_SESSION['portal_user'];
 }

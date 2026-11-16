@@ -7,24 +7,11 @@
 
 date_default_timezone_set('Asia/Bangkok');
 
-$envFile = __DIR__ . '/.env';
-if (!file_exists($envFile)) {
-    error_log('[export_appointments] ERROR: .env not found');
-    exit(1);
-}
-
-foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-    if (str_starts_with(trim($line), '#')) continue;
-    [$key, $val] = array_map('trim', explode('=', $line, 2));
-    $_ENV[$key] = $val;
-}
-
-$host   = $_ENV['DB_HOST']   ?? '172.16.16.155';
-$port   = $_ENV['DB_PORT']   ?? '3306';
-$dbname = $_ENV['DB_NAME']   ?? 'lkhos';
-$user   = $_ENV['DB_USER']   ?? 'adminwork';
-$pass   = $_ENV['DB_PASS']   ?? '';
-
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
+require_once __DIR__.'/runtime.php';
+$env=DashboardRuntime::config();
+$host=$env['DB_HOST']; $port=$env['DB_PORT']; $dbname=$env['DB_NAME'];
+$user=$env['DB_USER']; $pass=$env['DB_PASS'];
 /**
  * แปลง string จาก TIS-620 (encoding เดิมของ HosXP) เป็น UTF-8
  * ถ้าเป็น UTF-8 อยู่แล้ว (valid) จะคืนค่าเดิมไม่แปลงซ้ำ กัน double-encode
@@ -58,7 +45,7 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 } catch (PDOException $e) {
-    error_log('[export_appointments] DB Error: ' . $e->getMessage());
+    error_log('[export_appointments] DB connection failed; type=' . get_class($e));
     exit(1);
 }
 
@@ -121,10 +108,10 @@ $output = [
     'appointments' => $byDoctor,
 ];
 
-$jsonPath = __DIR__ . '/data/appointments.json';
-if (file_put_contents($jsonPath, json_encode($output, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
-    echo '[' . date('Y-m-d H:i:s') . '] OK — ' . count($rows) . " appointments saved\n";
-} else {
-    error_log('[export_appointments] ERROR: cannot write ' . $jsonPath);
+try {
+    DashboardRuntime::writeAppointments($output);
+    echo '[' . date('Y-m-d H:i:s') . '] OK appointments saved privately; count=' . count($rows) . PHP_EOL;
+} catch (Throwable $e) {
+    error_log('[export_appointments] private write failed; type=' . get_class($e));
     exit(1);
 }

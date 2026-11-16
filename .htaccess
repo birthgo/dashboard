@@ -1,0 +1,8 @@
+DirectoryIndex index.html
+Options -Indexes
+RewriteEngine On
+RewriteRule (^|/)\. - [F,L]
+RewriteRule ^(?:tools|tests|deployment)(?:/|$) - [F,L,NC]
+<FilesMatch "(?i)^(\.|.*\.(?:md|sql|bak|log|sqlite.*|sh)$|(?:runtime|environment|export_dental|export_appointments|debug_export)\.php$)">
+    Require all denied
+</FilesMatch>

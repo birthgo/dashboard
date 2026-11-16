@@ -495,14 +495,14 @@ async function load(date) {
       document.getElementById('apt-body').innerHTML = `
         <div class="state-box">
           <svg viewBox="0 0 24 24"><path d="M19 3H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11H6v-2h12v2zm0-4H6V8h12v2z"/></svg>
-          <p>${msg}</p>
+          <p>${escHtml(msg)}</p>
         </div>`;
       return;
     }
 
     let rows = list.map((a, i) => {
       const tel = a.hometel
-        ? `<a class="tel-link" href="tel:${a.hometel}">${a.hometel}</a>`
+        ? `<a class="tel-link" href="tel:${encodeURIComponent(String(a.hometel))}">${escHtml(a.hometel)}</a>`
         : '<span style="color:var(--silver)">—</span>';
       const note = a.note
         ? `<span class="note-cell">${escHtml(a.note)}</span>`

@@ -1,0 +1,3 @@
+<FilesMatch "(?i)^(?!dental_today\.json$).+">
+    Require all denied
+</FilesMatch>

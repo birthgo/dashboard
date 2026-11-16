@@ -1,0 +1,15 @@
+
+.env
+.env.*
+!.env.example
+config.local.php
+*.sqlite*
+*.bak
+data/appointments*.json
+data/portal_users*
+*.sqlite-wal
+*.sqlite-shm
+*.log
+*.csv
+*.xlsx
+storage/

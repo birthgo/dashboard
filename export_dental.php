@@ -7,21 +7,14 @@ date_default_timezone_set('Asia/Bangkok');
  * ปลอดภัยสำหรับ push ขึ้น GitHub Public
  */
 
-$envFile = __DIR__ . '/.env';
-if (!file_exists($envFile)) {
-    die("ERROR: ไม่พบ .env file ที่ {$envFile}\n");
-}
-
-$env = parse_ini_file($envFile);
-$DB_HOST = $env['DB_HOST'] ?? '172.16.16.155';
-$DB_PORT = $env['DB_PORT'] ?? '3306';
-$DB_NAME = $env['DB_NAME'] ?? 'lkhos';
-$DB_USER = $env['DB_USER'] ?? '';
-$DB_PASS = $env['DB_PASS'] ?? '';
-
-$GIT_REPO_PATH = $env['GIT_REPO_PATH'] ?? '/var/www/html/dental-dashboard';
-$PUSH_BRANCH   = $env['GIT_BRANCH'] ?? 'main';
-
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
+require_once __DIR__.'/environment.php';
+$env=DashboardEnvironment::load();
+$DB_HOST=$env['DB_HOST']; $DB_PORT=$env['DB_PORT']; $DB_NAME=$env['DB_NAME'];
+$DB_USER=$env['DB_USER']; $DB_PASS=$env['DB_PASS'];
+$GIT_REPO_PATH=$env['GIT_REPO_PATH']??'';
+$PUSH_BRANCH=$env['GIT_BRANCH']??'main';
+if (!is_dir($GIT_REPO_PATH) || !preg_match('~^[A-Za-z0-9][A-Za-z0-9/_-]*$~D',$PUSH_BRANCH)) { fwrite(STDERR,"Invalid Git output configuration\n"); exit(1); }
 // ─── Database Connection ────────────────────────────────────────────────────
 try {
     $pdo = new PDO(
@@ -35,7 +28,7 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    die("ERROR: DB connection failed: " . $e->getMessage() . "\n");
+    die("ERROR: DB connection failed: " . 'check DB configuration' . "\n");
 }
 
 $today = date('Y-m-d');
@@ -66,7 +59,7 @@ try {
     $stmt->execute([':department_date' => $today, ':dental_date' => $today]);
     $row = $stmt->fetch();
 } catch (PDOException $e) {
-    die("ERROR: Query failed: " . $e->getMessage() . "\n");
+    die("ERROR: Query failed: " . 'check DB configuration' . "\n");
 }
 
 $total = (int)$row['total'];
@@ -93,13 +86,13 @@ echo "[" . date('H:i:s') . "] เขียน JSON สำเร็จ: {$jsonFil
 
 // ─── Git Push ────────────────────────────────────────────────────────────────
 $commands = [
-    "cd {$GIT_REPO_PATH}",
+    'cd ' . escapeshellarg($GIT_REPO_PATH),
     "git add data/dental_today.json",
     "git diff --cached --quiet || git commit -m 'auto: update dental {$today} " . date('H:i') . "'",
-    "git push origin {$PUSH_BRANCH} 2>&1",
+    'git push origin ' . escapeshellarg($PUSH_BRANCH) . ' 2>&1',
 ];
 
 $cmd = implode(' && ', $commands);
 $result = shell_exec($cmd);
-echo "[" . date('H:i:s') . "] Git push: " . trim($result ?? 'no output') . "\n";
+echo "Git command finished; output suppressed to avoid credential leakage\n";
 echo "[" . date('H:i:s') . "] เสร็จสิ้น\n";

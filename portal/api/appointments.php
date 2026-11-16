@@ -16,7 +16,7 @@ $doctorCode = $user['doctor_code'];
 $date = $_GET['date'] ?? date('Y-m-d');
 
 // Validate date format
-if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+if (!is_string($date) || !preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $date, $parts) || !checkdate((int)$parts[2], (int)$parts[3], (int)$parts[1])) {
     echo json_encode(['error' => 'Invalid date']);
     exit;
 }
@@ -29,7 +29,7 @@ if ($date < $today || $date > $maxDate) {
     exit;
 }
 
-$jsonPath = dirname(dirname(__DIR__)) . '/data/appointments.json';
+$jsonPath = DashboardRuntime::privatePath('appointments.json');
 
 if (!file_exists($jsonPath)) {
     echo json_encode([
@@ -42,7 +42,12 @@ if (!file_exists($jsonPath)) {
     exit;
 }
 
-$data = json_decode(file_get_contents($jsonPath), true);
+try { $data = DashboardRuntime::readAppointments($jsonPath); }
+catch (Throwable $e) {
+    http_response_code(503);
+    echo json_encode(['error'=>'ข้อมูลนัดยังไม่พร้อมใช้งาน กรุณาแจ้งผู้ดูแล'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 $appointments = $data['appointments'][$doctorCode][$date] ?? [];
 
