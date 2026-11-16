@@ -36,6 +36,8 @@ try {
     $response=json_decode($json,true,512,JSON_THROW_ON_ERROR);
     expect($response['doctor_code']==='DOC_A'&&count($response['appointments'])===1&&$response['appointments'][0]['hn']==='MOCK_A','API can only return current doctor data');
     expect(!str_contains($json,'MOCK_B'),'other doctor never returned');
+    DashboardRuntime::writeAppointments(['appointments'=>['DOC_A'=>[$day=>[['note'=>"fixture\xFF"]]]]]);
+    expect(DashboardRuntime::readAppointments($root.'/appointments.json')['appointments']['DOC_A'][$day][0]['note']==="fixture\u{FFFD}",'preserve server invalid UTF-8 substitution during atomic export');
     file_put_contents($root.'/appointments.json','broken');
     $rejected=false;try{DashboardRuntime::readAppointments($root.'/appointments.json');}catch(Throwable $e){$rejected=true;}
     expect($rejected,'corrupt JSON cannot become empty data');

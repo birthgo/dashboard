@@ -6,6 +6,7 @@
 - ENV /etc/webapps/dashboard.env หรือWindows D:/webapps-secrets/dashboard.env root:apache0640 parent0750 httpd_config_t WindowsACLตามservice; DBuser dashboard SQLเจ้าของรัน .246เท่านั้น
 - SQLiteต้นทางตามโค้ด data/portal_users.sqlite+WAL/SHM ต้องตรวจVMจริงและsnapshotผ่านSQLitebackup ห้ามcopyfileเดี่ยวขณะwriterทำงาน ห้ามseed/resetบัญชีแพทย์หรือhashเมื่อย้าย
 - privateปลายทาง /var/lib/dashboard/portal_users.sqlite,appointments.json,sessions (DASHBOARD_PRIVATE_DIR) apacheเขียนdirectory/SQLiteได้ SELinux httpd_sys_rw_content_t; ไม่มีfallbackwebroot ไฟล์JSONมีข้อมูลผู้ป่วยห้ามGit/HTTP
+- เจ้าของส่ง diff Server ยืนยัน JSON ต้นทางจริง /var/lib/dental-dashboard/appointments.json ทั้ง exporter/API ไม่ใช่ data/appointments.json และใช้ JSON_INVALID_UTF8_SUBSTITUTE; branchใหม่รักษาflagนี้พร้อมatomicwrite ต้องตรวจและย้ายJSONจากpathจริง ไม่สรุปว่าต้นทางไม่มีJSONเพราะไม่มีไฟล์ในเว็บ
 - Portalยังใช้loginเดิมของแพทย์ในSQLiteเป็นระบบเดิมเฉพาะแอป ไม่เปลี่ยนเป็นSSOขณะmigration; sessionname DENTAL_DASHBOARDเก็บprivateต้องloginใหม่ ไม่reuseSSOsession
 - publicPages index.html/data/dental_today.jsonคงmain/URLเดิมและมีaggregateเท่านั้น; ลิงก์ moph.laokhwanhos.comต้องตรวจproxy/NATupstreamจริงก่อนcutover ไม่replaceIPหรือเปลี่ยนDNSอัตโนมัติ
 - .155 GIT_REPO_PATH/cron/log/Gitcredentialsอยู่นอกwebrootหลายpathตามREADMEเก่าเป็นค่าแนะนำ ยังไม่ได้ยืนยันVM; ห้ามอ่าน/แสดงtokenหรือแก้exporter .155เพียงเพราะpullPortal .53

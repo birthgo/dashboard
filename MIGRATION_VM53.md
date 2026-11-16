@@ -15,7 +15,7 @@ DB user dashboard เจ้าของตั้งรหัส/รัน deploy
 | ENVWindows | D:/webapps-secrets/dashboard.env | templateเท่านั้น ACLตามservice |
 | SQLiteเดิม | .52 /var/www/html/dental-dashboard/data/portal_users.sqlite และ -wal/-shm | pathจากโค้ด ยังรอlsยืนยันจริง; ห้ามcopyเฉพาะmainfileขณะมีwriter |
 | SQLiteใหม่ | /var/lib/dashboard/portal_users.sqlite | apacheเขียนfileและdirectoryได้ ใช้snapshotSQLitebackup ไม่seed/reset |
-| รายชื่อนัดเก่า | .52 .../data/appointments.json | ข้อมูลผู้ป่วย ห้ามGit/HTTP; ตรวจJSONครบก่อนย้าย |
+| รายชื่อนัดเก่า | /var/lib/dental-dashboard/appointments.json | เจ้าของยืนยันจาก diff Server ของทั้ง exporter/API; ยังต้อง ls ยืนยันไฟล์จริงบน .52/.53 ข้อมูลผู้ป่วยห้ามGit/HTTP |
 | รายชื่อนัดใหม่ | /var/lib/dashboard/appointments.json | exporterเขียนatomic workerapache mode0600 APIอ่านหลังloginเฉพาะdoctor |
 | Sessionใหม่ | /var/lib/dashboard/sessions | apache0700, httpd_sys_rw_content_t; ไม่ต้องcopyPHPSESSIDเก่าหรือSSOsession ผู้ใช้loginใหม่ |
 | SQLite/JSONdirectory | /var/lib/dashboard | apache0750 httpd_sys_rw_content_t; ไม่copyทั้ง /var/lib |
@@ -30,6 +30,7 @@ DB user dashboard เจ้าของตั้งรหัส/รัน deploy
 - คงpasswordhash/doctor mapping/force-change/rate-limitเดิม ไม่copyusersจากconstแทนฐานจริง
 - auth.phpมีsafe503handlerไม่แสดงstack/credentials; APIอ่านjsonเสียแจ้งerror ไม่ตีความว่าไม่มีนัด
 - export_appointments CLI-onlyเขียนatomicJSONส่วนตัว; debug_exportเก่าปิด ไม่exportข้อมูลdebug
+- รวม custom Server: JSON_INVALID_UTF8_SUBSTITUTE คงเดิม ไม่ให้ค่าHISที่ยังมีinvalidbyteทำให้exportทั้งไฟล์ล้ม; pathเดิม /var/lib/dental-dashboard/appointments.json ย้ายไปprivatepathใหม่ตามENV /var/lib/dashboard ไม่ใช้webrootfallback
 - export_dentalในbranchนี้ใช้ENVมาตรฐาน/CLI-onlyและquoteGitargs แต่ไม่รันหรือdeployบน .155ในงานนี้ .155runtimeเดิมจึงไม่เปลี่ยน
 - ไม่แตะpublic index.html/data/dental_today.json; publicgitrepoยังมีโค้ดแต่ไม่มีข้อมูลส่วนตัว/secretใหม่ .gitignoreบล็อกappointments/SQLite/WAL/SHM
 

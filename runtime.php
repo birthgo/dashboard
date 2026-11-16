@@ -44,7 +44,7 @@ final class DashboardRuntime {
     }
     public static function writeAppointments(array $value): void {
         $path=self::privatePath('appointments.json');
-        $json=json_encode($value,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR);
+        $json=json_encode($value,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT|JSON_INVALID_UTF8_SUBSTITUTE|JSON_THROW_ON_ERROR);
         $temp=tempnam(dirname($path),'.appointments-');
         if($temp===false)throw new RuntimeException('Private output unavailable');
         try{if(!chmod($temp,0600)||file_put_contents($temp,$json)===false||!rename($temp,$path))throw new RuntimeException('Private output failed');}
