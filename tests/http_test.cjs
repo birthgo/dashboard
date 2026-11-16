@@ -20,8 +20,8 @@ $project=${JSON.stringify(project)};
 require $project.'/runtime.php';
 (new ReflectionProperty(DashboardRuntime::class,'values'))->setValue(null,['DASHBOARD_PRIVATE_DIR'=>__DIR__]);
 $route=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
-if(!in_array($route,['/portal/login.php','/portal/index.php','/portal/logout.php','/portal/change_password.php','/portal/api/appointments.php'],true)){http_response_code(404);exit;}
-$_SERVER['SCRIPT_NAME']=$route;require $project.$route;
+if(!in_array($route,['/portal/auth.php','/portal/login.php','/portal/index.php','/portal/logout.php','/portal/change_password.php','/portal/api/appointments.php'],true)){http_response_code(404);exit;}
+$_SERVER['SCRIPT_NAME']=$route;$_SERVER['SCRIPT_FILENAME']=$project.$route;require $project.$route;
 `;
 (async()=>{
   fs.writeFileSync(path.join(dir,'setup.php'),setup);fs.writeFileSync(path.join(dir,'router.php'),router);
@@ -31,6 +31,7 @@ $_SERVER['SCRIPT_NAME']=$route;require $project.$route;
   const base='http://127.0.0.1:'+port;
   let ready=false;for(let i=0;i<60;i++){try{await fetch(base+'/not-found');ready=true;break;}catch{}await new Promise(r=>setTimeout(r,80));}assert(ready,'Fixture server startup');
   const api=()=>base+'/portal/api/appointments.php?date='+day+'&doctor_code=DOC_B';
+  for(const method of ['GET','HEAD']){const internal=await fetch(base+'/portal/auth.php',{method});assert.equal(internal.status,404);assert.equal(internal.headers.get('set-cookie'),null);}
   let response=await fetch(api(),{redirect:'manual'});assert.equal(response.status,401);assert.equal((await response.json()).error,'unauthorized');
   async function login(username){
     const landing=await fetch(base+'/portal/login.php');assert.equal(landing.status,200);

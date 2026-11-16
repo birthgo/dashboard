@@ -1,4 +1,9 @@
 <?php
+// Internal include/CLI helper. Direct HTTP access must not start a session.
+if (PHP_SAPI !== 'cli' && realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    http_response_code(404);
+    exit;
+}
 /**
  * portal/auth.php
  * - Existing doctor accounts and mappings come from the private SQLite snapshot.
